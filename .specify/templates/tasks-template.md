@@ -63,11 +63,12 @@ description: "Task list template for feature implementation"
 Examples of foundational tasks (adjust based on your project):
 
 - [ ] T004 Setup database schema and migrations framework
-- [ ] T005 [P] Implement authentication/authorization framework
-- [ ] T006 [P] Setup API routing and middleware structure
+- [ ] T005 [P] Implement OAuth 2.0 compliant authentication framework with state parameter CSRF protection
+- [ ] T006 [P] Setup secure token handling and session management
 - [ ] T007 Create base models/entities that all stories depend on
-- [ ] T008 Configure error handling and logging infrastructure
-- [ ] T009 Setup environment configuration management
+- [ ] T008 Configure error handling and security event logging infrastructure
+- [ ] T009 Setup environment configuration management for secrets (no hardcoded credentials)
+- [ ] T010 Implement minimal scope permission handling for OAuth providers
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
