@@ -1,48 +1,47 @@
+export const dynamic = "force-dynamic";
+
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import React, { Suspense, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import authService from '../../../services/authService';
 
-const CallbackPage = () => {
+function CallbackContent() {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Get token from URL parameters
     const token = searchParams.get('token');
     const errorParam = searchParams.get('error');
     const errorDetails = searchParams.get('details');
 
     if (token) {
       try {
-        // Handle the authentication callback
         const success = authService.handleCallback(token);
 
         if (success) {
-          // Redirect to dashboard or home page after successful login
           setTimeout(() => {
-            window.location.href = '/dashboard'; // or wherever you want to redirect after login
+            window.location.href = '/dashboard';
           }, 1500);
         } else {
           setError('Failed to process authentication token');
           setLoading(false);
         }
       } catch (err) {
-        setError('Error processing authentication callback: ' + err.message);
+        setError('Error processing authentication callback: ' + (err?.message || String(err)));
         setLoading(false);
       }
-    } else {
-      // Check if there's an error in the URL
-      if (errorParam) {
-        setError(`Authentication failed: ${errorParam}${errorDetails ? ` (${errorDetails})` : ''}`);
-      } else {
-        setError('No token received from authentication provider');
-      }
-      setLoading(false);
+      return;
     }
-  }, [searchParams]); // Only re-run when searchParams change
+
+    if (errorParam) {
+      setError(`Authentication failed: ${errorParam}${errorDetails ? ` (${errorDetails})` : ''}`);
+    } else {
+      setError('No token received from authentication provider');
+    }
+    setLoading(false);
+  }, [searchParams]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -93,6 +92,12 @@ const CallbackPage = () => {
       </div>
     </div>
   );
-};
+}
 
-export default CallbackPage;
+export default function CallbackPage() {
+  return (
+    <Suspense fallback={<div className="p-6">Loading...</div>}>
+      <CallbackContent />
+    </Suspense>
+  );
+}
