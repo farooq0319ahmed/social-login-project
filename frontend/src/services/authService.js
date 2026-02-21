@@ -128,6 +128,71 @@ class AuthService {
       'Content-Type': 'application/json'
     };
   }
+
+  /**
+   * Get current user info from API
+   */
+  async getCurrentUserFromAPI() {
+    try {
+      const response = await fetch('/api/auth/me', {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.user;
+      } else {
+        // If unauthorized, clear the token
+        if (response.status === 401) {
+          this.logout();
+        }
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Logout from API
+   */
+  async logoutFromAPI() {
+    try {
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: this.getAuthHeaders()
+      });
+
+      if (response.ok) {
+        this.logout();
+        return true;
+      } else {
+        // Even if API logout fails, still clear local token
+        this.logout();
+        return false;
+      }
+    } catch (error) {
+      console.error('Error during logout:', error);
+      this.logout();
+      return false;
+    }
+  }
+
+  /**
+   * Initiate Google OAuth flow
+   */
+  async initiateGoogleLogin() {
+    window.location.href = '/api/auth/google';
+  }
+
+  /**
+   * Initiate Facebook OAuth flow
+   */
+  async initiateFacebookLogin() {
+    window.location.href = '/api/auth/facebook';
+  }
 }
 
 // Export singleton instance

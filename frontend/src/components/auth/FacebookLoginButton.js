@@ -1,10 +1,11 @@
 import React from 'react';
+import authService from '../../services/authService';
 
 const FacebookLoginButton = ({ onClick, disabled = false }) => {
   const handleClick = () => {
     if (!disabled) {
-      // Redirect to backend Facebook OAuth endpoint
-      window.location.href = '/auth/facebook';
+      // Use the auth service to initiate Facebook OAuth flow
+      authService.initiateFacebookLogin();
     }
   };
 

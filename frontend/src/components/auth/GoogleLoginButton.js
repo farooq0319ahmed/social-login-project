@@ -1,10 +1,11 @@
 import React from 'react';
+import authService from '../../services/authService';
 
 const GoogleLoginButton = ({ onClick, disabled = false }) => {
   const handleClick = () => {
     if (!disabled) {
-      // Redirect to backend Google OAuth endpoint
-      window.location.href = '/auth/google';
+      // Use the auth service to initiate Google OAuth flow
+      authService.initiateGoogleLogin();
     }
   };
 
