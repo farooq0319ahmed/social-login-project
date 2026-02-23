@@ -1,56 +1,52 @@
-# Research: Social Login Implementation
+# Research: Next.js-Only Social Login Conversion
 
 ## Overview
-Research into OAuth 2.0 implementation patterns for Google and Facebook using FastAPI and Authlib.
+Research document for converting the Python backend to Next.js API routes for social login functionality.
 
-## Decision: OAuth Implementation Approach
-Using Authlib library for FastAPI as it provides comprehensive OAuth 2.0 client implementation with built-in security features.
+## Decision: Next.js API Routes Architecture
+**Rationale**: Moving all backend functionality to Next.js API routes allows for a single Vercel deployment without external backend dependencies. This approach maintains security while simplifying deployment and scaling.
 
-### Rationale:
-- Authlib is actively maintained and follows OAuth 2.0 standards
-- Provides built-in CSRF protection via state parameter
-- Integrates seamlessly with FastAPI
-- Supports both Google and Facebook OAuth providers
-- Has comprehensive documentation and community support
+**Alternatives considered**:
+1. Keep Python backend on Render/DigitalOcean - Requires managing multiple deployments
+2. Use Next.js API routes - Single deployment, Vercel native, server-side processing
+3. Use edge functions - Potential latency benefits but limited for OAuth flows
 
-### Alternatives considered:
-- Using requests-oauthlib directly: Requires more manual implementation of security features
-- Writing custom OAuth implementation: High security risk and maintenance burden
-- Using python-social-auth: Heavier framework than needed for this use case
+## Decision: OAuth Flow Implementation
+**Rationale**: Implement OAuth flows server-side in Next.js API routes with CSRF protection using state parameters. This ensures security while keeping sensitive operations server-side.
 
-## Decision: JWT Token Implementation
-Using PyJWT library for generating signed JWT tokens after successful OAuth authentication.
+**Alternatives considered**:
+1. Client-side OAuth - Would expose secrets to client
+2. Server-side OAuth via API routes - Keeps secrets secure, implements CSRF protection
+3. Third-party auth service - Adds external dependency
 
-### Rationale:
-- PyJWT is lightweight and well-established
-- Easy integration with FastAPI
-- Supports various signing algorithms
-- Good security track record
+## Decision: JWT Token Management
+**Rationale**: Generate JWT tokens server-side in API routes and return to frontend for storage. This maintains security while allowing stateless authentication.
 
-### Alternatives considered:
-- Python's built-in secrets module: Would require more custom implementation
-- Other JWT libraries: PyJWT is the most popular and well-supported
+**Alternatives considered**:
+1. Session cookies - Would require more complex session management
+2. JWT tokens - Stateless, scalable, standard approach
+3. Database sessions - Would require backend storage
 
-## Decision: Environment Variable Management
-Using python-dotenv for loading environment variables in development and standard os.environ for production.
+## Decision: Environment Variables
+**Rationale**: Store all OAuth credentials in environment variables accessible only server-side in API routes. This prevents secret exposure to client-side code.
 
-### Rationale:
-- python-dotenv is the standard for Python environment management
-- Secure and well-established practice
-- Works well with containerized deployments
+**Alternatives considered**:
+1. Hardcoded values - Major security risk
+2. Environment variables - Standard practice, secure
+3. External secret management - Overkill for this project
 
-## Decision: Session Management
-Implementing state parameter for CSRF protection and temporary session storage for OAuth flow management.
+## Decision: CSRF Protection
+**Rationale**: Implement state parameter for OAuth flows stored in temporary server-side storage or secure cookies. This prevents cross-site request forgery attacks.
 
-### Rationale:
-- State parameter is required by OAuth 2.0 specification
-- Prevents CSRF attacks during OAuth flow
-- Temporary session storage ensures secure token exchange
+**Alternatives considered**:
+1. No CSRF protection - Security vulnerability
+2. State parameter with temporary storage - Standard OAuth practice
+3. PKCE extension - Not needed for web applications
 
-## Decision: Error Handling
-Implementing comprehensive error handling for OAuth flow including provider errors, network timeouts, and invalid responses.
+## Decision: Libraries and Dependencies
+**Rationale**: Use jose library for JWT handling in Next.js, which is a well-established library for JWT operations in JavaScript environments.
 
-### Rationale:
-- OAuth flows can fail for various reasons
-- Proper error handling improves user experience
-- Security requirements mandate proper error management
+**Alternatives considered**:
+1. jsonwebtoken - Popular but jose has better TypeScript support
+2. jose - Modern, well-maintained, good security track record
+3. Custom implementation - High security risk and maintenance burden

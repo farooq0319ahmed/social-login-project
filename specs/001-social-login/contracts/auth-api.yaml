@@ -1,156 +1,157 @@
 openapi: 3.0.0
 info:
-  title: Social Login API
+  title: Next.js Social Login API
+  description: API for handling social login authentication flows
   version: 1.0.0
-  description: API for OAuth 2.0 social login functionality
+servers:
+  - url: http://localhost:3000
+    description: Development server
 
 paths:
-  /auth/google:
+  /api/auth/google:
     get:
       summary: Initiate Google OAuth flow
-      description: Redirects user to Google's OAuth consent screen
+      description: Redirects user to Google OAuth consent screen
       responses:
         '302':
           description: Redirect to Google OAuth consent screen
           headers:
             Location:
+              description: Google OAuth URL with state parameter
               schema:
                 type: string
-              description: Google OAuth URL with client_id and state
+                format: uri
 
-  /auth/google/callback:
-    get:
-      summary: Google OAuth callback handler
-      description: Handles the callback from Google OAuth and authenticates user
-      parameters:
-        - name: code
-          in: query
-          required: true
-          description: Authorization code from Google
-          schema:
-            type: string
-        - name: state
-          in: query
-          required: true
-          description: State parameter for CSRF protection
-          schema:
-            type: string
-      responses:
-        '302':
-          description: Redirect to frontend with JWT token
-          headers:
-            Location:
-              schema:
-                type: string
-              description: Frontend URL with JWT token
-        '400':
-          description: Bad request - invalid code or state
-        '401':
-          description: Unauthorized - failed authentication
-
-  /auth/facebook:
+  /api/auth/facebook:
     get:
       summary: Initiate Facebook OAuth flow
-      description: Redirects user to Facebook's OAuth consent screen
+      description: Redirects user to Facebook OAuth consent screen
       responses:
         '302':
           description: Redirect to Facebook OAuth consent screen
           headers:
             Location:
+              description: Facebook OAuth URL with state parameter
               schema:
                 type: string
-              description: Facebook OAuth URL with client_id and state
+                format: uri
 
-  /auth/facebook/callback:
+  /api/auth/callback:
     get:
-      summary: Facebook OAuth callback handler
-      description: Handles the callback from Facebook OAuth and authenticates user
+      summary: Handle OAuth callback
+      description: Receives OAuth callback from providers and returns JWT token
       parameters:
         - name: code
           in: query
-          required: true
-          description: Authorization code from Facebook
+          description: Authorization code from OAuth provider
+          required: false
           schema:
             type: string
         - name: state
           in: query
-          required: true
           description: State parameter for CSRF protection
+          required: false
+          schema:
+            type: string
+        - name: error
+          in: query
+          description: Error code from OAuth provider
+          required: false
+          schema:
+            type: string
+        - name: error_description
+          in: query
+          description: Error description from OAuth provider
+          required: false
           schema:
             type: string
       responses:
         '302':
-          description: Redirect to frontend with JWT token
+          description: Redirect to frontend callback page with token or error
           headers:
             Location:
+              description: Frontend callback URL with token or error parameters
               schema:
                 type: string
-              description: Frontend URL with JWT token
+                format: uri
         '400':
-          description: Bad request - invalid code or state
+          description: Bad request due to missing or invalid parameters
+
+  /api/auth/me:
+    get:
+      summary: Get current user info
+      description: Retrieve information about the authenticated user
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User information retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/UserInfo'
         '401':
-          description: Unauthorized - failed authentication
+          description: Unauthorized - invalid or expired token
+        '403':
+          description: Forbidden - insufficient permissions
 
-  /health:
-    get:
-      summary: Health check endpoint
-      description: Returns the health status of the API
+  /api/auth/logout:
+    post:
+      summary: Logout user
+      description: Invalidate user session and clear authentication
+      security:
+        - BearerAuth: []
       responses:
         '200':
-          description: Health status response
+          description: Logout successful
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  status:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
                     type: string
-                    example: "healthy"
-
-  /privacy:
-    get:
-      summary: Privacy policy endpoint
-      description: Returns the privacy policy information
-      responses:
-        '200':
-          description: Privacy policy response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  privacy:
-                    type: string
-                    example: "This app uses Google and Facebook login for authentication only. No personal data is stored or shared."
+                    example: "Logged out successfully"
+        '401':
+          description: Unauthorized - invalid or expired token
 
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
-    AuthResponse:
+    UserInfo:
       type: object
-      properties:
-        token:
-          type: string
-          description: JWT token for authenticated session
-        user:
-          type: object
-          properties:
-            id:
-              type: string
-              description: User ID
-            email:
-              type: string
-              description: User email
-            name:
-              type: string
-              description: User name
-            provider:
-              type: string
-              description: OAuth provider (google, facebook)
-          required:
-            - id
-            - email
-            - name
-            - provider
       required:
-        - token
-        - user
+        - id
+        - email
+        - name
+        - provider
+      properties:
+        id:
+          type: string
+          description: Unique user identifier
+        email:
+          type: string
+          format: email
+          description: User's email address
+        name:
+          type: string
+          description: User's full name
+        provider:
+          type: string
+          enum: [google, facebook]
+          description: OAuth provider used for authentication
+        picture:
+          type: string
+          format: uri
+          description: URL to user's profile picture (optional)

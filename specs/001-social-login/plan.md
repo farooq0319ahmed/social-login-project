@@ -1,49 +1,43 @@
-# Implementation Plan: [FEATURE]
+# Implementation Plan: Next.js-Only Social Login Conversion
 
-**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
-**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+**Branch**: `001-nextjs-only-conversion` | **Date**: 2026-02-22 | **Spec**: [specs/001-social-login/spec.md]
+**Input**: Feature specification from `/specs/001-social-login/spec.md`
 
 **Note**: This template is filled in by the `/sp.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
 
 ## Summary
 
-[Extract from feature spec: primary requirement + technical approach from research]
+Convert existing Python backend to Next.js API routes, eliminating external backend dependency. All OAuth functionality (Google/Facebook) and JWT handling will be managed through Next.js API routes, enabling full deployment on Vercel without external backend services.
 
 ## Technical Context
 
-<!--
-  ACTION REQUIRED: Replace the content in this section with the technical details
-  for the project. The structure here is presented in advisory capacity to guide
-  the iteration process.
--->
-
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-**Project Type**: [single/web/mobile - determines source structure]  
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Language/Version**: TypeScript/JavaScript for frontend, Node.js runtime for API routes
+**Primary Dependencies**: Next.js 16+, React 19+, jose library for JWT handling, OAuth 2.0 libraries
+**Storage**: N/A (stateless authentication with JWT tokens)
+**Testing**: Jest/React Testing Library for frontend, manual testing for OAuth flows
+**Target Platform**: Web application deployable on Vercel
+**Project Type**: Web application with integrated authentication
+**Performance Goals**: OAuth flows complete within 30 seconds, API routes respond under 500ms
+**Constraints**: <500ms p95 for API routes, JWT tokens must be properly signed and validated, CSRF protection implemented
+**Scale/Scope**: Single application supporting thousands of concurrent OAuth sessions
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-- OAuth 2.0 and OpenID Connect compliance verified
-- Zero-secret exposure validated (no hardcoded credentials)
-- CSRF protection with state parameter planned
-- Secure token handling approach defined
-- Minimal permission scopes approach confirmed
-- Security requirements alignment verified
+- ✅ OAuth 2.0 and OpenID Connect compliance verified (using standard OAuth flows)
+- ✅ Zero-secret exposure validated (secrets stored in environment variables only)
+- ✅ CSRF protection with state parameter planned (implemented in API routes)
+- ✅ Secure token handling approach defined (JWT tokens with proper signing)
+- ✅ Minimal permission scopes approach confirmed (only email, profile requested)
+- ✅ Security requirements alignment verified (all security principles met)
 
 ## Project Structure
 
 ### Documentation (this feature)
 
 ```text
-specs/[###-feature]/
+specs/001-social-login/
 ├── plan.md              # This file (/sp.plan command output)
 ├── research.md          # Phase 0 output (/sp.plan command)
 ├── data-model.md        # Phase 1 output (/sp.plan command)
@@ -53,51 +47,44 @@ specs/[###-feature]/
 ```
 
 ### Source Code (repository root)
-<!--
-  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-  for this feature. Delete unused options and expand the chosen structure with
-  real paths (e.g., apps/admin, packages/something). The delivered plan must
-  not include Option labels.
--->
 
 ```text
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
-src/
-├── models/
-├── services/
-├── cli/
-└── lib/
-
-tests/
-├── contract/
-├── integration/
-└── unit/
-
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
 frontend/
 ├── src/
+│   ├── app/
+│   │   ├── api/
+│   │   │   └── auth/
+│   │   │       ├── google/
+│   │   │       │   └── route.ts
+│   │   │       ├── facebook/
+│   │   │       │   └── route.ts
+│   │   │       ├── callback/
+│   │   │       │   └── route.ts
+│   │   │       ├── me/
+│   │   │       │   └── route.ts
+│   │   │       └── logout/
+│   │   │           └── route.ts
+│   │   ├── auth/
+│   │   │   └── callback/
+│   │   │       └── page.js
+│   │   ├── privacy-policy/
+│   │   │   └── page.js
+│   │   └── data-deletion/
+│   │       └── page.js
 │   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
-
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
+│   │   └── auth/
+│   │       ├── GoogleLoginButton.js
+│   │       └── FacebookLoginButton.js
+│   ├── services/
+│   │   └── authService.js
+│   └── utils/
+├── .env.local           # Environment variables
+├── next.config.ts       # Next.js configuration
+├── package.json         # Dependencies
+└── README.md            # Documentation
 ```
 
-**Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
+**Structure Decision**: Web application with frontend-only architecture using Next.js API routes for all backend functionality. This eliminates the need for a separate backend service while maintaining security and scalability.
 
 ## Complexity Tracking
 
@@ -105,5 +92,4 @@ directories captured above]
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+| None | | No violations identified |
