@@ -15,8 +15,9 @@ export async function GET(request: NextRequest) {
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
 
-  // Store state in cookie for validation later
-  cookies().set('oauth_state', state, {
+  // Get cookie store for async operations and store state in cookie for validation later
+  const cookieStore = await cookies();
+  cookieStore.set('oauth_state', state, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     maxAge: 60 * 10, // 10 minutes

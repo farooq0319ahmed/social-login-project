@@ -15,8 +15,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${request.nextUrl.origin}/auth/callback?error=oauth_error&details=${encodeURIComponent(errorDescription || error)}`);
   }
 
+  // Get cookie store for async operations
+  const cookieStore = await cookies();
+
   // Verify state parameter for CSRF protection
-  const storedState = cookies().get('oauth_state')?.value;
+  const storedState = cookieStore.get('oauth_state')?.value;
   if (!state || state !== storedState) {
     console.error('Invalid OAuth state parameter');
     return NextResponse.redirect(`${request.nextUrl.origin}/auth/callback?error=invalid_state`);
@@ -30,7 +33,7 @@ export async function GET(request: NextRequest) {
   try {
     // Determine if this is Google or Facebook based on the original request
     // We'll use the presence of cookies to determine the provider
-    const providerCookie = cookies().get('oauth_provider')?.value || 'unknown';
+    const providerCookie = cookieStore.get('oauth_provider')?.value || 'unknown';
 
     let userInfo: any = {};
 
@@ -111,16 +114,18 @@ export async function GET(request: NextRequest) {
       .sign(secret);
 
     // Clear the OAuth state cookie
-    cookies().delete('oauth_state');
-    cookies().delete('oauth_provider');
+    cookieStore.delete('oauth_state');
+    cookieStore.delete('oauth_provider');
 
     // Redirect to frontend callback with JWT token
     return NextResponse.redirect(`${request.nextUrl.origin}/auth/callback?token=${token}`);
   } catch (error: any) {
     console.error('OAuth callback error:', error);
     // Clear the OAuth state cookie
-    cookies().delete('oauth_state');
-    cookies().delete('oauth_provider');
+    const errorCookieStore = await cookies();
+    errorCookieStore.delete('oauth_state');
+    errorCookieStore.delete('oauth_provider');
+
     return NextResponse.redirect(`${request.nextUrl.origin}/auth/callback?error=callback_error&details=${encodeURIComponent(error.message || 'Unknown error')}`);
   }
 }
